@@ -32,7 +32,7 @@ def train_with_params(search_params):
 
 if __name__ == '__main__':
     
-    input_file ="/mnt/UXResearchRepo/iris_data.csv"
+    input_file ="/repos/UXResearchRepo/iris_data.csv"
 
     iris_df = pd.read_csv(input_file, header = 0)
  
