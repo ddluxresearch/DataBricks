@@ -33,7 +33,7 @@ def train_with_params(search_params):
 if __name__ == '__main__':
     
     #####****** ----> CHANGE THIS YOUR DATASET LOCATION <---- ********#######
-    input_file ="/repos/UXResearchRepo/iris_data.csv"
+    input_file =" "
 
     iris_df = pd.read_csv(input_file, header = 0)
  
