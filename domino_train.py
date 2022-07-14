@@ -22,7 +22,7 @@ def train_with_params(search_params):
     #determine predictions
     predictions = my_model.predict(X_test)
 
-    #output metrics - here we chose precision and recall
+    #output metrics - here we chose precision 
     precision = metrics.precision_score(y_true = y_test, y_pred = predictions, average ='weighted')
     recall = metrics.recall_score(y_true = y_test, y_pred = predictions, average ='weighted')
     f1_score = metrics.f1_score(y_true = y_test, y_pred = predictions, average ='weighted')
@@ -33,8 +33,7 @@ def train_with_params(search_params):
 if __name__ == '__main__':
     
     #####****** ----> CHANGE THIS YOUR DATASET LOCATION <---- ********#######
-    input_file =" "
-
+    input_file ="iris_data.csv"
     iris_df = pd.read_csv(input_file, header = 0)
  
     #format data columns
