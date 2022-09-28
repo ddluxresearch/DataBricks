@@ -20,7 +20,7 @@ from mlflow.utils.environment import _mlflow_conda_env
 # COMMAND ----------
 
 # Choose the mode in the widget displayed above
-dbutils.widgets.dropdown("mode", "Training", ["Training", "HPO"])
+dbutils.widgets.dropdown("mode", "Train", ["Train", "HPO"])
 
 # COMMAND ----------
 
@@ -42,7 +42,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 #set a random seed so results will be the same for all of us
 np.random.seed(415)
 
-model_name = "iris_classification"
+model_name = "subir_iris_classification"
 client = MlflowClient()
 
 # COMMAND ----------
@@ -62,7 +62,7 @@ class SklearnModelWrapper(mlflow.pyfunc.PythonModel):
 # COMMAND ----------
 
 # Hyper parameters for training
-if mode == 'training':
+if mode == 'train':
     
     max_depth = 2
     min_samples_leaf = 2
@@ -71,12 +71,11 @@ if mode == 'training':
     mlflow.set_experiment("/Users/subir.mansukhani@dominodatalab.com/iris_training")
 
 
+        
     with mlflow.start_run(run_name='untuned_decision_tree'):
-
         my_model = tree.DecisionTreeClassifier(max_depth=max_depth, 
                                            min_samples_leaf=min_samples_leaf,
                                            min_samples_split=min_samples_split)
-
         my_model.fit(X_train,y_train)
 
         #get predictions
@@ -120,10 +119,6 @@ if mode == 'training':
           version=model_version.version,
           stage="Production",
         )
-    
-# Print the feature importance for the model
-feature_importances = pd.DataFrame(my_model.feature_importances_, index=X_train.columns.tolist(), columns=['importance'])
-feature_importances.sort_values('importance', ascending=False)
 
 
 # COMMAND ----------
