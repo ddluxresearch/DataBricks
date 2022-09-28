@@ -100,25 +100,11 @@ if mode == 'train':
                 additional_conda_channels=None,
             )
 
-        mlflow.pyfunc.log_model("untuned_decision_tree_model", python_model=wrappedModel, conda_env=conda_env, signature=signature)
-
+        mlflow.pyfunc.log_model("decision_tree_model", python_model=wrappedModel, conda_env=conda_env, signature=signature)
             
-        # Register the model in the registry
+        # Get the run id to register the model
         run_id = mlflow.search_runs(filter_string='tags.mlflow.runName = "untuned_decision_tree"').iloc[0].run_id
-        # If you see the error "PERMISSION_DENIED: User does not have any permission level assigned to the registered model", 
-        # the cause may be that a model already exists with the name "wine_quality". Try using a different name.
-
-        model_version = mlflow.register_model(f"runs:/{run_id}/untuned_decision_tree_model", model_name)
-
-        # Registering the model takes a few seconds, so add a small delay
-        time.sleep(15)
-
-        # Tag the model to production
-        client.transition_model_version_stage(
-          name=model_name,
-          version=model_version.version,
-          stage="Production",
-        )
+        
 
 
 # COMMAND ----------
@@ -134,8 +120,6 @@ if mode == 'hpo':
     }
 
     def train_model(params):
-        # With MLflow autologging, hyperparameters and the trained model are automatically logged to MLflow.
-        mlflow.sklearn.autolog()
         with mlflow.start_run(nested=True):
             my_model = tree.DecisionTreeClassifier(max_depth=params['max_depth'], min_samples_leaf= params['min_samples_leaf'], min_samples_split= params['min_samples_split'])
             my_model.fit(X_train,y_train)
@@ -149,8 +133,17 @@ if mode == 'hpo':
             mlflow.log_metric('recall', recall)
             mlflow.log_metric('f1_score', f1_score)
             #Log the model
-            signature = infer_signature(X_train, my_model.predict(X_train))
-            mlflow.sklearn.log_model(my_model, "model", signature=signature)
+            wrappedModel = SklearnModelWrapper(my_model)
+            signature = infer_signature(X_train, wrappedModel.predict(None, X_train))
+
+            # The necessary dependencies are added to a conda.yaml file which is logged along with the model for serving
+            conda_env =  _mlflow_conda_env(
+                additional_conda_deps=None,
+                additional_pip_deps=["cloudpickle=={}".format(cloudpickle.__version__), "scikit-learn=={}".format(sklearn.__version__)],
+                additional_conda_channels=None,
+            )
+
+            mlflow.pyfunc.log_model("decision_tree_model", python_model=wrappedModel, conda_env=conda_env, signature=signature)
             # Set the loss to -1*precision so fmin maximizes the precision
             return {'status': STATUS_OK, 'loss': -1*precision, 'dtree': my_model.tree_}
 
@@ -162,29 +155,26 @@ if mode == 'hpo':
 
     # Run fmin within an MLflow run context so that each hyperparameter configuration is logged as a child run of a parent
     # run called "xgboost_models" .
-    with mlflow.start_run(run_name='decision_tree_models'):
+    with mlflow.start_run(run_name='hpo_decision_tree_models'):
         best_params = fmin(
         fn=train_model, 
         space=search_space, 
         algo=tpe.suggest, 
-        max_evals=10,
+        max_evals=5,
         trials=spark_trials,
       )
 
     best_run = mlflow.search_runs(order_by=['metrics.precision DESC']).iloc[0]
     print(f'Precision of Best Run: {best_run["metrics.precision"]}')
-    
-    # Update the production iris_classification model in MLflow Model Registry
-    new_model_version = mlflow.register_model(f"runs:/{best_run.run_id}/model", model_name)
-    # Registering the model takes a few seconds, so add a small delay
-    time.sleep(15)
+    run_id = best_run.run_id
 
-    # Tag the new model version as Production
-    client.transition_model_version_stage(
-      name=model_name,
-      version=new_model_version.version,
-      stage="Production"
-    )
+
+# COMMAND ----------
+
+# Register the model 
+# If you see the error "PERMISSION_DENIED: User does not have any permission level assigned to the registered model", 
+# the cause may be that a model already exists. Try using a different name in model_name
+model_version = mlflow.register_model(f"runs:/{run_id}/decision_tree_model", model_name, tags = {"mode": mode})
 
 # COMMAND ----------
 

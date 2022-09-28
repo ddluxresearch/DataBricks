@@ -11,7 +11,7 @@ def create_tf_serving_json(data):
 
 def score_model(dataset):
     # Get this URL from the models page
-    url = 'https://dbc-ee48c8dd-ea5c.cloud.databricks.com/model/iris_classification/5/invocations'
+    url = 'https://dbc-ee48c8dd-ea5c.cloud.databricks.com/model/subir_iris_classification/8/invocations'
     headers = {'Authorization': f'Bearer {os.environ.get("DATABRICKS_TOKEN")}', 'Content-Type': 'application/json'}
     ds_dict = dataset.to_dict(orient='split') if isinstance(dataset, pd.DataFrame) else create_tf_serving_json(dataset)
     data_json = json.dumps(ds_dict, allow_nan=True)
@@ -35,6 +35,7 @@ y = iris_df.Species
 #split the data into train and test sets
 _, X_test, _, _ = train_test_split(X, y, test_size=0.3, random_state=42)
 
+# Number of rows to predict
 num_predictions = 5
 served_predictions = score_model(X_test[:num_predictions])
 served_predictions
