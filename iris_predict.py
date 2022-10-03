@@ -26,7 +26,7 @@ def score_model(dataset):
 os.environ["DATABRICKS_TOKEN"] = "dapi65ff59a8653c95fb08fc11e7e251e4ac"
 
 #Read the data, change the location based on the user 
-iris_df =  pd.read_csv("/Workspace/Repos/subir.mansukhani@dominodatalab.com/UXResearchRepo/iris_data.csv")
+iris_df =  pd.read_csv("iris_data.csv")
 #format data columns
 feature_cols = ['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm','PetalWidthCm']
 X = iris_df.loc[:, feature_cols]
