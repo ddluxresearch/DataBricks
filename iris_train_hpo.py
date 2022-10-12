@@ -28,8 +28,14 @@ mode = dbutils.widgets.get("mode").lower()
 
 # COMMAND ----------
 
-#Read the data, change the location based on the user 
-iris_df =  pd.read_csv("iris_data.csv")
+#   ------- UPDATE THE DATA LOCATION -------------- 
+
+#Use this if the file is in the FileStore
+# iris_df = spark.read.csv('', header=True, inferSchema=True)
+
+#Use this if the file is there as a table
+iris_df = spark.read.format("delta").load('/user/hive/warehouse/iris_data')
+iris_df = iris_df.toPandas()
 
 #format data columns
 feature_cols = ['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm','PetalWidthCm']
@@ -42,8 +48,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 #set a random seed so results will be the same for all of us
 np.random.seed(415)
 
-#Change the name of the model below
-model_name = "subir_iris_classification"
+#    ------- UPDATE THE MODEL NAME HERE -------------- 
+model_name = ""
 client = MlflowClient()
 
 # COMMAND ----------
@@ -71,7 +77,7 @@ if mode == 'train':
     min_samples_split = 5
     
     # Change the user name in the path below
-    mlflow.set_experiment("/Users/hina.shah@dominodatalab.com/iris_training")
+    mlflow.set_experiment("/Users/ddluxresearch@gmail.com/iris_training")
 
 
         
@@ -114,7 +120,7 @@ if mode == 'train':
 
 if mode == 'hpo':
     # Change the user name in the path below
-    mlflow.set_experiment("/Users/hina.shah@dominodatalab.com/iris_hpo")
+    mlflow.set_experiment("/Users/ddluxresearch@gmail.com/iris_hpo")
     # Set up the search space for the hyperparameters
     search_space = {
       'max_depth': scope.int(hp.quniform('max_depth', 2, 5, 1)),
